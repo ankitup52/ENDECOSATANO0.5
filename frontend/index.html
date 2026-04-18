@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EndcoSteNo - Secure Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+        }
+        
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #2d2d3f;
+            --bg-card: #1e1e2f;
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --accent: #667eea;
+            --success: #48bb78;
+            --danger: #e53e3e;
+            --warning: #ed8936;
+            --border: #3d3d5f;
+        }
+        
+        [data-theme="light"] {
+            --bg-primary: #f0f2f5;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #718096;
+            --border: #e2e8f0;
+        }
+        
+        body { background: var(--bg-primary); color: var(--text-primary); }
+        
+        .container { min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .box { background: var(--bg-card); padding: 40px; border-radius: 20px; width: 100%; max-width: 400px; border: 1px solid var(--border); }
+        h2 { text-align: center; margin-bottom: 10px; color: var(--text-primary); }
+        .subtitle { text-align: center; margin-bottom: 30px; color: var(--text-secondary); font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 12px 15px; margin: 10px 0; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-primary); color: var(--text-primary); }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+        button { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; background: var(--accent); color: white; transition: all 0.3s; }
+        button:hover { opacity: 0.9; transform: scale(1.02); }
+        .btn-secondary { background: var(--success); }
+        .btn-danger { background: var(--danger); }
+        .btn-warning { background: var(--warning); }
+        .error { color: var(--danger); text-align: center; margin-top: 15px; }
+        .success { color: var(--success); text-align: center; margin-top: 15px; }
+        
+        .chat-container { display: flex; height: 100vh; }
+        .sidebar { width: 320px; background: var(--bg-secondary); display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .user-info-sidebar { display: flex; align-items: center; gap: 10px; }
+        .profile-pic-small { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; overflow: hidden; }
+        .profile-pic-small img { width: 100%; height: 100%; object-fit: cover; }
+        .logout-btn { background: var(--danger); padding: 5px 12px; width: auto; font-size: 12px; margin: 0; }
+        
+        .tabs { display: flex; border-bottom: 1px solid var(--border); }
+        .tab { flex: 1; padding: 12px; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 13px; }
+        .tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+        
+        .list-container { flex: 1; overflow-y: auto; padding: 10px; }
+        .user-item, .group-item { padding: 12px; margin: 5px 0; background: var(--bg-primary); border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); }
+        .user-item:hover, .group-item:hover { background: var(--accent); transform: translateX(5px); }
+        .user-avatar, .group-avatar { width: 45px; height: 45px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; overflow: hidden; }
+        .user-details { flex: 1; }
+        .user-name { font-weight: bold; }
+        .user-status { font-size: 11px; opacity: 0.7; }
+        .online { color: var(--success); }
+        .offline { color: var(--text-secondary); }
+        
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--bg-primary); }
+        .chat-header { padding: 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .chat-with-info { display: flex; align-items: center; gap: 15px; }
+        .chat-avatar { width: 50px; height: 50px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; overflow: hidden; }
+        .typing-status { font-size: 12px; color: var(--accent); margin-top: 5px; }
+        
+        .messages { flex: 1; padding: 20px; overflow-y: auto; }
+        .message { margin-bottom: 15px; display: flex; animation: fadeIn 0.3s ease; position: relative; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .message.sent { justify-content: flex-end; }
+        .message.received { justify-content: flex-start; }
+        .message-content { max-width: 70%; padding: 10px 15px; border-radius: 18px; }
+        .message.sent .message-content { background: linear-gradient(135deg, var(--accent), #764ba2); color: white; border-bottom-right-radius: 5px; }
+        .message.received .message-content { background: var(--bg-secondary); border: 1px solid var(--border); border-bottom-left-radius: 5px; }
+        .message-content strong { font-size: 12px; display: block; margin-bottom: 5px; }
+        .message.sent .message-content strong { color: #ffd700; }
+        .message.received .message-content strong { color: var(--accent); }
+        .message-content p { margin: 5px 0; word-wrap: break-word; }
+        .message-content small { font-size: 10px; opacity: 0.7; display: block; margin-top: 5px; }
+        
+        .message-actions { position: absolute; top: -25px; right: 0; display: none; gap: 5px; background: var(--bg-secondary); padding: 5px 10px; border-radius: 20px; border: 1px solid var(--border); z-index: 10; }
+        .message:hover .message-actions { display: flex; }
+        .message-actions button { width: auto; padding: 2px 8px; margin: 0; font-size: 12px; background: var(--accent); }
+        
+        .reactions { display: flex; gap: 5px; margin-top: 5px; font-size: 14px; }
+        .reply-indicator { font-size: 11px; opacity: 0.7; margin-bottom: 5px; padding-left: 10px; border-left: 2px solid var(--accent); }
+        
+        .message-input { display: flex; padding: 20px; background: var(--bg-secondary); border-top: 1px solid var(--border); gap: 10px; align-items: center; }
+        .message-input input { flex: 1; margin: 0; }
+        .message-input button { width: auto; padding: 12px 25px; margin: 0; }
+        .file-btn, .voice-btn, .location-btn, .search-btn, .theme-btn, .call-btn { width: auto; padding: 12px; margin: 0; background: var(--bg-primary); }
+        .call-btn { background: var(--success); }
+        .reply-bar { padding: 10px 20px; background: var(--bg-primary); border-top: 1px solid var(--border); display: none; justify-content: space-between; align-items: center; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: var(--bg-secondary); padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; border: 1px solid var(--border); }
+        .modal-content h3 { margin-bottom: 20px; color: var(--text-primary); }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        
+        .search-results { position: absolute; top: 60px; right: 20px; width: 300px; max-height: 400px; overflow-y: auto; background: var(--bg-secondary); border-radius: 10px; border: 1px solid var(--border); z-index: 100; display: none; }
+        .search-result-item { padding: 10px; border-bottom: 1px solid var(--border); cursor: pointer; }
+        .search-result-item:hover { background: var(--accent); }
+        
+        .stego-section { padding: 20px; }
+        .stego-card { background: var(--bg-primary); padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .stego-card h4 { margin-bottom: 15px; color: var(--text-primary); }
+        .result-box { margin-top: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 10px; color: var(--success); }
+        
+        .create-group-btn { width: calc(100% - 20px); margin: 10px; background: var(--success); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+        
+        .voice-recording { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--danger); padding: 20px 40px; border-radius: 50px; color: white; display: none; z-index: 1000; }
+        .location-item { background: var(--bg-secondary); padding: 8px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .location-item button { width: auto; padding: 2px 8px; font-size: 10px; margin: 0; }
+        .call-video { width: 100%; height: 250px; background: #000; border-radius: 10px; object-fit: cover; }
+        .ringing-tone { animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--danger); color: white; padding: 10px 20px; border-radius: 8px; z-index: 2000; animation: fadeOut 3s forwards; }
+        @keyframes fadeOut { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+    </style>
+</head>
+<body>
+    <div id="loginPage" class="container">
+        <div class="box">
+            <h2>🔐 EndcoSteNo</h2>
+            <div class="subtitle">Secure Chat with All Features</div>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="login()">Login</button>
+            <button class="btn-secondary" onclick="showRegister()">Create Account</button>
+            <div id="loginMsg" class="error"></div>
+        </div>
+    </div>
+
+    <div id="registerPage" class="container" style="display:none">
+        <div class="box">
+            <h2>📝 Create Account</h2>
+            <input type="text" id="regUser" placeholder="Username">
+            <input type="email" id="regEmail" placeholder="Email">
+            <input type="password" id="regPass" placeholder="Password">
+            <input type="file" id="regProfilePic" accept="image/*">
+            <button onclick="register()">Register</button>
+            <button class="btn-secondary" onclick="showLogin()">Back to Login</button>
+            <div id="regMsg" class="error"></div>
+        </div>
+    </div>
+
+    <div id="chatApp" style="display:none">
+        <div class="chat-container">
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <div class="user-info-sidebar">
+                        <div class="profile-pic-small" id="currentUserAvatar"><span id="currentUserInitial"></span></div>
+                        <span id="currentUserDisplay"></span>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+                        <button class="logout-btn" onclick="logout()">Logout</button>
+                    </div>
+                </div>
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('chats')">💬 Chats</button>
+                    <button class="tab" onclick="switchTab('groups')">👥 Groups</button>
+                    <button class="tab" onclick="switchTab('stego')">🔒 Stegano</button>
+                </div>
+                <div style="padding: 10px;"><input type="text" id="searchInput" placeholder="🔍 Search messages..." onkeyup="searchMessages()"></div>
+                <div id="chatsTab" class="list-container"></div>
+                <div id="groupsTab" class="list-container" style="display:none">
+                    <button class="create-group-btn" onclick="showGroupModal()">+ New Group</button>
+                    <div id="groupsList"></div>
+                </div>
+                <div id="stegoTab" class="stego-section" style="display:none">
+                    <div class="stego-card">
+                        <h4>🔐 Encode Secret Message</h4>
+                        <select id="stegoUserSelect"><option value="">Select User</option></select>
+                        <div style="margin: 10px 0;"><label style="display: flex; align-items: center; gap: 10px;"><input type="checkbox" id="useAI" onchange="toggleAIOptions()"> 🤖 Generate AI Image</label></div>
+                        <div id="aiOptions" style="display:none;"><input type="text" id="aiPrompt" placeholder="AI Image prompt"></div>
+                        <div id="normalImageOptions"><input type="file" id="stegoImage" accept="image/*"></div>
+                        <textarea id="stegoMessage" rows="3" placeholder="Secret message..."></textarea>
+                        <input type="text" id="fakeMessage" placeholder="Fake message (shown for wrong password)">
+                        <input type="password" id="stegoPassword" placeholder="Password">
+                        <div style="margin: 10px 0;"><label>📍 GPS Location Lock</label><button type="button" onclick="addAllowedLocation()" style="width:auto; padding:5px 10px;">+ Add Location</button><div id="allowedLocationsList"></div></div>
+                        <div style="display: flex; gap: 10px;"><input type="number" id="expiresIn" placeholder="Expires in (hours)"><input type="number" id="maxViews" placeholder="Max views"></div>
+                        <button onclick="encodeStego()">🔐 Encode & Send</button>
+                    </div>
+                    <div class="stego-card">
+                        <h4>🔓 Decode Secret Message</h4>
+                        <select id="stegoList"><option value="">Select Stego Image</option></select>
+                        <input type="password" id="decodePassword" placeholder="Password">
+                        <button onclick="decodeStegoWithLocation()">📍 Decode with Location</button>
+                        <button onclick="decodeStego()">🔓 Decode Without Location</button>
+                        <div id="decodeResult" class="result-box" style="display:none"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-area">
+                <div class="chat-header" id="chatHeader" style="display:none">
+                    <div class="chat-with-info">
+                        <div class="chat-avatar" id="chatAvatar"><span id="chatAvatarText">👤</span></div>
+                        <div><h3 id="chatTitle">Select a chat</h3><div id="typingStatus" class="typing-status"></div></div>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="search-btn" onclick="toggleSearch()">🔍</button>
+                        <button class="call-btn" onclick="startVideoCall()" style="background: var(--success);">📹 Video Call</button>
+                        <button class="call-btn" onclick="startAudioCall()" style="background: var(--warning);">🎙️ Audio Call</button>
+                        <button class="btn-warning" style="width:auto; padding:8px 15px;" onclick="showProfileModal()">👤</button>
+                    </div>
+                </div>
+                <div class="messages" id="messagesList"><div style="text-align:center; padding:40px;">Select a chat</div></div>
+                <div class="reply-bar" id="replyBar"><span id="replyingTo"></span><button onclick="cancelReply()">✖</button></div>
+                <div class="message-input" id="messageInput" style="display:none">
+                    <button class="file-btn" onclick="document.getElementById('fileInput').click()">📎</button>
+                    <input type="file" id="fileInput" style="display:none" onchange="sendFile()">
+                    <button class="voice-btn" onclick="startVoiceRecording()">🎙️</button>
+                    <button class="location-btn" onclick="shareLocation()">📍</button>
+                    <input type="text" id="messageText" placeholder="Type a message..." onkeypress="handleTyping(event)" onkeyup="stopTyping()">
+                    <button onclick="sendMessage()">Send 📤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CALL MODAL -->
+    <div id="callModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <h3 id="callStatus">Connecting...</h3>
+            <div style="display: flex; gap: 20px; margin: 20px 0;">
+                <div style="flex: 1; text-align: center;"><video id="localVideo" autoplay muted playsinline class="call-video"></video><p>You</p></div>
+                <div style="flex: 1; text-align: center;"><video id="remoteVideo" autoplay playsinline class="call-video"></video><p id="remoteName">Calling...</p></div>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button onclick="toggleMute()" style="width: auto; padding: 10px 20px;">🎤 Mute</button>
+                <button onclick="toggleVideo()" style="width: auto; padding: 10px 20px;">📹 Stop Video</button>
+                <button onclick="endCall()" style="width: auto; padding: 10px 20px; background: var(--danger);">📞 End Call</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- INCOMING CALL MODAL -->
+    <div id="incomingCallModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <h3 id="incomingCallerName">Incoming Call...</h3>
+            <p id="incomingCallType">📹 Video Call</p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="acceptCall()" style="background: var(--success);">📞 Accept</button>
+                <button onclick="rejectCall()" style="background: var(--danger);">❌ Reject</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="searchResults" class="search-results"></div>
+    <div id="voiceRecording" class="voice-recording">🎙️ Recording... <span id="recordingTime">0s</span></div>
+    <div id="groupModal" class="modal"><div class="modal-content"><h3>Create Group</h3><input type="text" id="groupName" placeholder="Group Name"><textarea id="groupDesc" placeholder="Description"></textarea><div class="modal-buttons"><button onclick="createGroup()">Create</button><button class="btn-secondary" onclick="closeGroupModal()">Cancel</button></div></div></div>
+    <div id="groupMembersModal" class="modal"><div class="modal-content"><h3>Group Members</h3><div id="groupMembersList"></div><button class="btn-secondary" onclick="closeGroupMembersModal()">Close</button></div></div>
+    <div id="profileModal" class="modal"><div class="modal-content"><h3>Edit Profile</h3><div style="text-align:center; margin-bottom:20px;"><div class="profile-pic-small" style="width:80px; height:80px; margin:0 auto;"><img id="profileModalPic" src=""></div></div><input type="file" id="profilePicUpload" accept="image/*"><div class="modal-buttons"><button onclick="updateProfile()">Update</button><button class="btn-secondary" onclick="closeProfileModal()">Cancel</button></div></div></div>
+    <div id="messageOptionsModal" class="modal"><div class="modal-content"><h3>Message Options</h3><button onclick="replyToMessage()">💬 Reply</button><button onclick="editMessage()">✏️ Edit</button><button onclick="deleteMessage()">🗑️ Delete</button><button onclick="pinMessage()">📌 Pin</button><div style="margin-top: 15px;"><p>Add Reaction:</p><div style="display: flex; gap: 10px;"><button onclick="addReaction('❤️')">❤️</button><button onclick="addReaction('👍')">👍</button><button onclick="addReaction('😂')">😂</button><button onclick="addReaction('😮')">😮</button><button onclick="addReaction('😢')">😢</button><button onclick="addReaction('😡')">😡</button></div></div><button class="btn-secondary" onclick="closeMessageOptions()">Cancel</button></div></div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+        const API = 'ngrok http 8080';
+        let socket, currentUser, selectedUser, selectedGroup, currentChatType = null;
+        let messages = [], usersList = [], groupsList = [], stegoList = [];
+        let typingTimeout, selectedMessageId = null, replyingToMessage = null;
+        let mediaRecorder, audioChunks = [], isRecording = false, recordingInterval;
+        let allowedLocations = [];
+        
+        // WebRTC Variables
+        let localStream = null, remoteStream = null, peerConnection = null, callActive = false;
+        let currentCallType = null, pendingCallFrom = null, pendingCallOffer = null;
+        
+        const callConfiguration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
+        
+        // Encryption Functions
+        function getSharedSecret(userId1, userId2) { const sortedIds = [userId1, userId2].sort(); return CryptoJS.SHA256(sortedIds[0] + sortedIds[1]).toString(); }
+        function encryptMessage(message, sharedSecret) { const iv = CryptoJS.lib.WordArray.random(16); const encrypted = CryptoJS.AES.encrypt(message, CryptoJS.enc.Utf8.parse(sharedSecret), { iv: iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 }); return { ciphertext: encrypted.ciphertext.toString(CryptoJS.enc.Base64), iv: iv.toString(CryptoJS.enc.Base64) }; }
+        function decryptMessage(encryptedData, sharedSecret) { try { const iv = CryptoJS.enc.Base64.parse(encryptedData.iv); const ciphertext = CryptoJS.enc.Base64.parse(encryptedData.ciphertext); const decrypted = CryptoJS.AES.decrypt({ ciphertext: ciphertext }, CryptoJS.enc.Utf8.parse(sharedSecret), { iv: iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 }); return decrypted.toString(CryptoJS.enc.Utf8); } catch(e) { return null; } }
+        
+        function showToast(message) { const toast = document.createElement('div'); toast.className = 'toast'; toast.innerText = message; document.body.appendChild(toast); setTimeout(() => toast.remove(), 3000); }
+        
+        // Theme
+        function toggleTheme() { const current = document.documentElement.getAttribute('data-theme'); if (current === 'light') { document.documentElement.removeAttribute('data-theme'); localStorage.setItem('theme', 'dark'); } else { document.documentElement.setAttribute('data-theme', 'light'); localStorage.setItem('theme', 'light'); } }
+        if (localStorage.getItem('theme') === 'light') document.documentElement.setAttribute('data-theme', 'light');
+        
+        // AI & Location
+        function toggleAIOptions() { const useAI = document.getElementById('useAI').checked; document.getElementById('aiOptions').style.display = useAI ? 'block' : 'none'; document.getElementById('normalImageOptions').style.display = useAI ? 'none' : 'block'; }
+        function addAllowedLocation() { if (!navigator.geolocation) { alert('Geolocation not supported'); return; } navigator.geolocation.getCurrentPosition((pos) => { const name = prompt('Location name:'); if (name) { allowedLocations.push({ lat: pos.coords.latitude, lng: pos.coords.longitude, radius: 100, name: name }); updateAllowedLocationsList(); } }); }
+        function updateAllowedLocationsList() { const container = document.getElementById('allowedLocationsList'); if (!container) return; if (allowedLocations.length === 0) { container.innerHTML = '<small>No locations added</small>'; return; } container.innerHTML = allowedLocations.map((loc, i) => `<div class="location-item"><span>📍 ${loc.name}: ${loc.lat.toFixed(4)}</span><button onclick="removeAllowedLocation(${i})">✖</button></div>`).join(''); }
+        function removeAllowedLocation(index) { allowedLocations.splice(index, 1); updateAllowedLocationsList(); }
+        
+        // ============ CALL FUNCTIONS ============
+        async function checkUserOnline(userId) { return new Promise((resolve) => { socket.emit('check-user-status', { userId: userId }); socket.once('user-status-response', (data) => { resolve(data.isOnline); }); setTimeout(() => resolve(false), 2000); }); }
+        
+        async function startVideoCall() { await initiateCall('video'); }
+        async function startAudioCall() { await initiateCall('audio'); }
+        
+        async function initiateCall(callType) {
+            if (!selectedUser) { showToast('Select a user first'); return; }
+            const isOnline = await checkUserOnline(selectedUser._id);
+            if (!isOnline) { showToast(`${selectedUser.username} is offline. Cannot call.`); return; }
+            
+            document.getElementById('callModal').style.display = 'flex';
+            document.getElementById('callStatus').innerHTML = `🔔 Ringing ${selectedUser.username}...`;
+            document.getElementById('remoteName').innerHTML = selectedUser.username;
+            currentCallType = callType;
+            
+            socket.emit('initiate-call', { to: selectedUser._id, fromName: currentUser.username, callType: callType });
+            
+            // Timeout for no answer (30 seconds)
+            setTimeout(() => { if (callActive === false && document.getElementById('callModal').style.display === 'flex') { document.getElementById('callStatus').innerHTML = `❌ No answer from ${selectedUser.username}`; setTimeout(() => { document.getElementById('callModal').style.display = 'none'; showToast(`Missed call to ${selectedUser.username}`); }, 2000); } }, 30000);
+        }
+        
+        async function acceptCall() {
+            document.getElementById('incomingCallModal').style.display = 'none';
+            document.getElementById('callModal').style.display = 'flex';
+            document.getElementById('callStatus').innerHTML = `Connecting...`;
+            
+            try {
+                const mediaConstraints = pendingCallType === 'video' ? { video: true, audio: true } : { video: false, audio: true };
+                localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+                document.getElementById('localVideo').srcObject = localStream;
+                if (pendingCallType === 'audio') document.getElementById('localVideo').style.display = 'none';
+                
+                peerConnection = new RTCPeerConnection(callConfiguration);
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+                peerConnection.ontrack = (event) => { remoteStream = event.streams[0]; document.getElementById('remoteVideo').srcObject = remoteStream; if (pendingCallType === 'audio') document.getElementById('remoteVideo').style.display = 'none'; };
+                peerConnection.onicecandidate = (event) => { if (event.candidate) socket.emit('call-ice-candidate', { to: pendingCallFrom, candidate: event.candidate }); };
+                
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(pendingCallOffer));
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                
+                socket.emit('accept-call', { callerId: pendingCallFrom, answer: answer });
+                callActive = true;
+                document.getElementById('callStatus').innerHTML = 'Call connected';
+            } catch(err) { console.error(err); endCall(); }
+        }
+        
+        function rejectCall() {
+            socket.emit('reject-call', { callerId: pendingCallFrom, fromName: currentUser.username });
+            document.getElementById('incomingCallModal').style.display = 'none';
+            showToast('Call rejected');
+        }
+        
+        async function startCallWithMedia(mediaConstraints, isIncoming = false) {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+                document.getElementById('localVideo').srcObject = localStream;
+                if (!mediaConstraints.video) document.getElementById('localVideo').style.display = 'none';
+                
+                peerConnection = new RTCPeerConnection(callConfiguration);
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+                peerConnection.ontrack = (event) => { remoteStream = event.streams[0]; document.getElementById('remoteVideo').srcObject = remoteStream; if (!mediaConstraints.video) document.getElementById('remoteVideo').style.display = 'none'; };
+                peerConnection.onicecandidate = (event) => { if (event.candidate) socket.emit('call-ice-candidate', { to: selectedUser._id, candidate: event.candidate }); };
+                
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                socket.emit('call-offer', { to: selectedUser._id, offer: offer, fromName: currentUser.username, callType: mediaConstraints.video ? 'video' : 'audio' });
+                callActive = true;
+            } catch(err) { console.error(err); endCall(); }
+        }
+        
+        function toggleMute() { if (localStream) { const audioTrack = localStream.getAudioTracks()[0]; if (audioTrack) audioTrack.enabled = !audioTrack.enabled; } }
+        function toggleVideo() { if (localStream) { const videoTrack = localStream.getVideoTracks()[0]; if (videoTrack) videoTrack.enabled = !videoTrack.enabled; } }
+        function endCall() { if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; } if (peerConnection) { peerConnection.close(); peerConnection = null; } callActive = false; document.getElementById('callModal').style.display = 'none'; if (selectedUser) socket.emit('call-end', { to: selectedUser._id }); }
+        
+        // Auth Functions
+        async function register() {
+            const username = document.getElementById('regUser').value, email = document.getElementById('regEmail').value, password = document.getElementById('regPass').value;
+            if (!username || !email || !password) { document.getElementById('regMsg').innerText = 'Please fill all fields'; return; }
+            try { const res = await fetch(API + '/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, email, password }) }); const data = await res.json(); if (res.ok) { document.getElementById('regMsg').style.color = 'green'; document.getElementById('regMsg').innerText = 'Registered! Please login.'; setTimeout(() => showLogin(), 2000); } else { document.getElementById('regMsg').innerText = data.message; } } catch(err) { document.getElementById('regMsg').innerText = 'Error: ' + err.message; } }
+        
+        async function login() {
+            const username = document.getElementById('username').value, password = document.getElementById('password').value;
+            if (!username || !password) { document.getElementById('loginMsg').innerText = 'Please enter username and password'; return; }
+            try { const res = await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) }); const data = await res.json(); if (res.ok) { localStorage.setItem('token', data.token); localStorage.setItem('user', JSON.stringify(data.user)); currentUser = data.user; startChat(); } else { document.getElementById('loginMsg').innerText = data.message; } } catch(err) { document.getElementById('loginMsg').innerText = 'Cannot connect to server'; } }
+        
+        function startChat() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('chatApp').style.display = 'block';
+            document.getElementById('currentUserDisplay').innerHTML = `👤 ${currentUser.username}`;
+            document.getElementById('currentUserInitial').innerText = currentUser.username[0].toUpperCase();
+            
+            socket = io('https://abc123.ngrok.io');
+            socket.emit('user-join', currentUser._id);
+            
+            setInterval(() => { fetch(API + '/chat/last-seen', { method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }); }, 30000);
+            
+            socket.on('new-message', (msg) => {
+                if (msg.type === 'encrypted') { const sharedSecret = getSharedSecret(currentUser._id, msg.senderId); try { const encryptedData = JSON.parse(msg.message); const decryptedText = decryptMessage(encryptedData, sharedSecret); if (decryptedText) { msg.message = decryptedText; msg.isEncrypted = true; } } catch(e) { msg.message = '🔒 [Encrypted message]'; } }
+                if (currentChatType === 'user' && selectedUser && msg.senderId === selectedUser._id) { messages.push(msg); displayMessages(); markAsRead(msg.senderId); }
+                else if (currentChatType === 'user' && selectedUser && msg.senderId === currentUser._id) { messages.push(msg); displayMessages(); }
+                playNotificationSound();
+            });
+            
+            socket.on('user-typing', (data) => { if (selectedUser && data.userId === selectedUser._id) document.getElementById('typingStatus').innerHTML = data.isTyping ? `${data.username} is typing...` : ''; });
+            
+            // Call handlers
+            socket.on('incoming-call', (data) => {
+                pendingCallFrom = data.from;
+                pendingCallType = data.callType;
+                document.getElementById('incomingCallerName').innerHTML = `📞 ${data.fromName}`;
+                document.getElementById('incomingCallType').innerHTML = data.callType === 'video' ? '📹 Video Call' : '🎙️ Audio Call';
+                document.getElementById('incomingCallModal').style.display = 'flex';
+            });
+            
+            socket.on('call-ringing', () => { document.getElementById('callStatus').innerHTML = `🔔 Ringing...`; });
+            
+            socket.on('call-accepted', async (data) => {
+                if (peerConnection) await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                document.getElementById('callStatus').innerHTML = 'Call connected';
+            });
+            
+            socket.on('call-rejected', (data) => {
+                document.getElementById('callModal').style.display = 'none';
+                showToast(`${data.fromName} rejected the call`);
+                endCall();
+            });
+            
+            socket.on('call-offer', async (data) => {
+                if (!callActive) {
+                    pendingCallFrom = data.from;
+                    pendingCallOffer = data.offer;
+                    pendingCallType = data.callType;
+                    document.getElementById('incomingCallerName').innerHTML = `📞 ${data.fromName}`;
+                    document.getElementById('incomingCallType').innerHTML = data.callType === 'video' ? '📹 Video Call' : '🎙️ Audio Call';
+                    document.getElementById('incomingCallModal').style.display = 'flex';
+                }
+            });
+            
+            socket.on('call-answer', async (data) => { if (peerConnection) await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer)); });
+            socket.on('call-ice-candidate', async (data) => { if (peerConnection) await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate)); });
+            socket.on('call-end', () => { if (callActive) { showToast('Call ended'); endCall(); } });
+            
+            loadAllUsers(); loadGroups(); loadStegos();
+        }
+        
+        function playNotificationSound() { const audio = new Audio('data:audio/wav;base64,U3RlYWx0aCBzb3VuZA=='); audio.play().catch(e => console.log('Sound not supported')); }
+        function handleTyping(event) { if (event.key === 'Enter') { sendMessage(); stopTyping(); return; } if (selectedUser) { socket.emit('typing-start', { senderId: currentUser._id, receiverId: selectedUser._id, username: currentUser.username }); clearTimeout(typingTimeout); typingTimeout = setTimeout(() => stopTyping(), 1000); } }
+        function stopTyping() { if (selectedUser) socket.emit('typing-stop', { senderId: currentUser._id, receiverId: selectedUser._id, username: currentUser.username }); }
+        async function markAsRead(senderId) { try { await fetch(API + '/chat/mark-read', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ senderId }) }); socket.emit('mark-read', { senderId, receiverId: currentUser._id }); } catch(err) {} }
+        
+        async function startVoiceRecording() { if (isRecording) { stopVoiceRecording(); return; } try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorder = new MediaRecorder(stream); audioChunks = []; mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data); mediaRecorder.onstop = () => sendVoiceNote(); mediaRecorder.start(); isRecording = true; document.getElementById('voiceRecording').style.display = 'block'; let seconds = 0; recordingInterval = setInterval(() => { seconds++; document.getElementById('recordingTime').innerText = seconds + 's'; }, 1000); setTimeout(() => stopVoiceRecording(), 30000); } catch(err) { alert('Microphone access denied'); } }
+        function stopVoiceRecording() { if (mediaRecorder && isRecording) { mediaRecorder.stop(); mediaRecorder.stream.getTracks().forEach(track => track.stop()); isRecording = false; clearInterval(recordingInterval); document.getElementById('voiceRecording').style.display = 'none'; } }
+        async function sendVoiceNote() { const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); const formData = new FormData(); formData.append('file', audioBlob, 'voice.webm'); try { const res = await fetch(API + '/chat/upload-file', { method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: formData }); const data = await res.json(); if (res.ok) { const msg = { senderId: currentUser._id, senderName: currentUser.username, receiverId: selectedUser._id, message: '🎤 Voice message', type: 'voice', fileUrl: data.fileUrl, createdAt: new Date() }; socket.emit('private-message', msg); messages.push(msg); displayMessages(); } } catch(err) {} }
+        function shareLocation() { if (!selectedUser) return; navigator.geolocation.getCurrentPosition(async (pos) => { const lat = pos.coords.latitude, lng = pos.coords.longitude; try { const res = await fetch(API + '/chat/share-location', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ receiverId: selectedUser._id, lat, lng, address: `${lat}, ${lng}` }) }); if (res.ok) { const msg = { senderId: currentUser._id, senderName: currentUser.username, receiverId: selectedUser._id, message: `📍 ${lat}, ${lng}`, type: 'location', createdAt: new Date() }; socket.emit('private-message', msg); messages.push(msg); displayMessages(); } } catch(err) {} }); }
+        async function searchMessages() { const query = document.getElementById('searchInput').value; if (query.length < 2) { document.getElementById('searchResults').style.display = 'none'; return; } try { const res = await fetch(API + '/chat/search?query=' + encodeURIComponent(query), { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }); const results = await res.json(); const resultsDiv = document.getElementById('searchResults'); if (results.length > 0) { resultsDiv.style.display = 'block'; resultsDiv.innerHTML = results.map(msg => `<div class="search-result-item" onclick="jumpToMessage('${msg._id}')"><strong>${msg.senderId?.username || 'Unknown'}:</strong> ${msg.message.substring(0, 50)}<small>${new Date(msg.createdAt).toLocaleTimeString()}</small></div>`).join(''); } else { resultsDiv.style.display = 'none'; } } catch(err) {} }
+        function toggleSearch() { const results = document.getElementById('searchResults'); results.style.display = results.style.display === 'block' ? 'none' : 'block'; }
+        async function sendFile() { const file = document.getElementById('fileInput').files[0]; if (!file || !selectedUser) return; const formData = new FormData(); formData.append('file', file); try { const res = await fetch(API + '/chat/upload-file', { method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: formData }); const data = await res.json(); if (res.ok) { const msg = { senderId: currentUser._id, senderName: currentUser.username, receiverId: selectedUser._id, message: `📎 ${file.name}`, type: 'file', fileUrl: data.fileUrl, createdAt: new Date() }; socket.emit('private-message', msg); messages.push(msg); displayMessages(); document.getElementById('fileInput').value = ''; } } catch(err) {} }
+        function showMessageOptions(messageId) { selectedMessageId = messageId; document.getElementById('messageOptionsModal').style.display = 'flex'; }
+        function closeMessageOptions() { document.getElementById('messageOptionsModal').style.display = 'none'; selectedMessageId = null; }
+        function replyToMessage() { const msg = messages.find(m => m._id === selectedMessageId); if (msg) { replyingToMessage = msg; document.getElementById('replyBar').style.display = 'flex'; document.getElementById('replyingTo').innerHTML = `Replying to: ${msg.message.substring(0, 50)}...`; } closeMessageOptions(); }
+        function cancelReply() { replyingToMessage = null; document.getElementById('replyBar').style.display = 'none'; }
+        async function editMessage() { const newText = prompt('Edit message:'); if (!newText) return; try { await fetch(API + '/chat/message/' + selectedMessageId, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ message: newText }) }); const msg = messages.find(m => m._id === selectedMessageId); if (msg) { msg.message = newText; msg.isEdited = true; displayMessages(); } } catch(err) {} closeMessageOptions(); }
+        async function deleteMessage() { if (!confirm('Delete this message?')) return; try { await fetch(API + '/chat/message/' + selectedMessageId, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }); messages = messages.filter(m => m._id !== selectedMessageId); displayMessages(); } catch(err) {} closeMessageOptions(); }
+        async function pinMessage() { try { await fetch(API + '/chat/message/' + selectedMessageId + '/pin', { method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }); alert('Message pinned!'); } catch(err) {} closeMessageOptions(); }
+        async function addReaction(reaction) { try { await fetch(API + '/chat/message/' + selectedMessageId + '/reaction', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ reaction }) }); const msg = messages.find(m => m._id === selectedMessageId); if (msg) { const existing = msg.reactions?.find(r => r.userId === currentUser._id); if (existing) existing.reaction = reaction; else msg.reactions = [...(msg.reactions || []), { userId: currentUser._id, reaction }]; displayMessages(); } } catch(err) {} closeMessageOptions(); }
+        async function updateProfile() { const file = document.getElementById('profilePicUpload').files[0]; if (file) { const formData = new FormData(); formData.append('profilePicture', file); try { const res = await fetch(API + '/chat/upload-profile', { method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: formData }); const data = await res.json(); if (res.ok) { currentUser.profilePicture = data.profilePicture; localStorage.setItem('user', JSON.stringify(currentUser)); location.reload(); } } catch(err) {} } closeProfileModal(); }
+        function showProfileModal() { document.getElementById('profileModal').style.display = 'flex'; if (currentUser.profilePicture) document.getElementById('profileModalPic').src = `http://localhost:3000${currentUser.profilePicture}`; }
+        function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
+        
+        async function loadAllUsers() { try { const res = await fetch(API + '/chat/users', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }); usersList = await res.json(); const filtered = usersList.filter(u => u._id !== currentUser._id); const container = document.getElementById('chatsTab'); if (filtered.length === 0) container.innerHTML = '<div style="text-align:center; padding:20px;">No other users found</div>'; else container.innerHTML = filtered.map(user => `<div class="user-item" onclick="selectChatUser('${user._id}', '${user.username}')"><div class="user-avatar">${user.profilePicture ? `<img src="http://localhost:3000${user.profilePicture}">` : user.username[0].toUpperCase()}</div><div class="user-details"><div class="user-name">${user.username}</div><div class="user-status ${user.status === 'online' ? 'online' : 'offline'}">${user.status === 'online' ? '🟢 Online' : '⚫ Offline'}</div></div></div>`).join(''); const userSelect = document.getElementById('stegoUserSelect'); if (userSelect) userSelect.innerHTML = '<option value="">Select User</option>' + filtered.map(u => `<option value="${u._id}">${u.username}</option>`).join(''); } catch(err) {} }
+        
+        function selectChatUser(id, name) { currentChatType = 'user'; selectedUser = { _id: id, username: name }; selectedGroup = null; document.getElementById('chatHeader').style.display = 'flex'; document.getElementById('chatTitle').innerHTML = `Chat with ${name}`; document.getElementById('messageInput').style.display = 'flex'; document.getElementById('chatAvatarText').innerHTML = name[0].toUpperCase(); messages = []; loadMessages(id); }
+        async function loadMessages(userId) { try { const res = await fetch(API + '/chat/messages/' + userId, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }); if (res.ok) { messages = await res.json(); displayMessages(); } } catch(err) {} }
+        
+        function sendMessage() { const text = document.getElementById('messageText').value; if (!text.trim() || !selectedUser) return; const sharedSecret = getSharedSecret(currentUser._id, selectedUser._id); const encrypted = encryptMessage(text, sharedSecret); const msg = { senderId: currentUser._id, senderName: currentUser.username, receiverId: selectedUser._id, message: JSON.stringify(encrypted), type: 'encrypted', replyTo: replyingToMessage?._id || null, createdAt: new Date() }; socket.emit('private-message', msg); const displayMsg = { ...msg, message: text, isEncrypted: true }; messages.push(displayMsg); displayMessages(); document.getElementById('messageText').value = ''; cancelReply(); stopTyping(); }
+        
+        function displayMessages() { const container = document.getElementById('messagesList'); if (!container) return; if (messages.length === 0) { container.innerHTML = '<div style="text-align:center; padding:40px;">No messages yet.</div>'; return; } container.innerHTML = messages.map(msg => { const isSent = msg.senderId === currentUser._id; const encryptionIcon = msg.isEncrypted ? '🔒 ' : ''; const senderName = isSent ? 'You' : (msg.senderName || selectedUser?.username); const displayName = encryptionIcon + senderName; const time = new Date(msg.createdAt).toLocaleTimeString(); const reactions = msg.reactions ? Object.entries(msg.reactions.reduce((acc, r) => { acc[r.reaction] = (acc[r.reaction] || 0) + 1; return acc; }, {})).map(([r, c]) => `${r} ${c}`).join(' ') : ''; let replyHtml = ''; if (msg.replyTo) replyHtml = `<div class="reply-indicator">↩️ Replying to: ${msg.replyTo.message?.substring(0, 50)}...</div>`; let content = `<p>${msg.message}</p>`; if (msg.type === 'file' && msg.fileUrl) content = `<p>📎 <a href="http://localhost:3000${msg.fileUrl}" target="_blank">${msg.message}</a></p>`; if (msg.type === 'voice' && msg.fileUrl) content = `<p>🎤 <audio controls src="http://localhost:3000${msg.fileUrl}"></audio></p>`; if (msg.type === 'location') content = `<p>📍 <a href="https://maps.google.com/?q=${msg.message.replace('📍 ', '')}" target="_blank">${msg.message}</a></p>`; return `<div class="message ${isSent ? 'sent' : 'received'}" onclick="showMessageOptions('${msg._id}')"><div class="message-content">${replyHtml}<strong>${displayName}:</strong>${content}${reactions ? `<div class="reactions">${reactions}</div>` : ''}<small>${time} ${msg.isEdited ? '(edited)' : ''}</small>${isSent ? `<div class="read-receipt">${msg.isRead ? '✓✓ Read' : '✓ Sent'}</div>` : ''}</div><div class="message-actions"><button onclick="event.stopPropagation();showMessageOptions('${msg._id}')">⋯</button></div></div>`; }).join(''); container.scrollTop = container.scrollHeight; }
+        
+        async function loadGroups() { try { const res = await fetch(API + '/group/my-groups', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }); groupsList = await res.json(); const container = document.getElementById('groupsList'); if (groupsList.length === 0) container.innerHTML = '<div style="text-align:center; padding:20px;">No groups yet. Create one!</div>'; else container.innerHTML = groupsList.map(g => `<div class="group-item" onclick="selectGroup('${g._id}', '${g.name}')"><div class="group-avatar">👥</div><div class="user-details"><div class="user-name">${g.name}</div><div class="user-status">${g.members.length} members</div></div></div>`).join(''); } catch(err) {} }
+        function selectGroup(id, name) { currentChatType = 'group'; selectedGroup = { _id: id, name: name }; selectedUser = null; document.getElementById('chatHeader').style.display = 'flex'; document.getElementById('chatTitle').innerHTML = `Group: ${name}`; document.getElementById('messageInput').style.display = 'flex'; document.getElementById('chatAvatarText').innerHTML = '👥'; socket.emit('join-group', id); loadGroupMessages(id); }
+        async function loadGroupMessages(groupId) { try { const res = await fetch(API + '/group/' + groupId + '/messages', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }); if (res.ok) { messages = await res.json(); displayMessages(); } } catch(err) {} }
+        function showGroupModal() { document.getElementById('groupModal').style.display = 'flex'; } function closeGroupModal() { document.getElementById('groupModal').style.display = 'none'; document.getElementById('groupName').value = ''; document.getElementById('groupDesc').value = ''; } function closeGroupMembersModal() { document.getElementById('groupMembersModal').style.display = 'none'; }
+        async function createGroup() { const name = document.getElementById('groupName').value, description = document.getElementById('groupDesc').value; try { const res = await fetch(API + '/group/create', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ name, description, members: [] }) }); if (res.ok) { closeGroupModal(); loadGroups(); } } catch(err) {} }
+        
+        async function loadStegos() { try { const res = await fetch(API + '/stego/my-stegos', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }); stegoList = await res.json(); const select = document.getElementById('stegoList'); if (select) select.innerHTML = '<option value="">Select Stego Image</option>' + stegoList.map(s => `<option value="${s._id}">${new Date(s.createdAt).toLocaleDateString()} - From: ${s.senderId?.username}</option>`).join(''); } catch(err) {} }
+        async function encodeStego() { const receiverId = document.getElementById('stegoUserSelect').value, secretMessage = document.getElementById('stegoMessage').value, fakeMessage = document.getElementById('fakeMessage').value, password = document.getElementById('stegoPassword').value, useAI = document.getElementById('useAI').checked, aiPrompt = document.getElementById('aiPrompt').value, expiresIn = document.getElementById('expiresIn').value, maxViews = document.getElementById('maxViews').value, imageFile = document.getElementById('stegoImage').files[0]; if (!receiverId || !secretMessage || !password) { alert('Please fill required fields'); return; } if (!useAI && !imageFile) { alert('Please select an image or enable AI generation'); return; } const formData = new FormData(); if (imageFile) formData.append('image', imageFile); formData.append('receiverId', receiverId); formData.append('secretMessage', secretMessage); formData.append('fakeMessage', fakeMessage || 'Access denied'); formData.append('password', password); formData.append('useAI', useAI); if (aiPrompt) formData.append('aiPrompt', aiPrompt); if (expiresIn) formData.append('expiresIn', expiresIn); if (maxViews) formData.append('maxViews', maxViews); if (allowedLocations.length > 0) formData.append('allowedLocations', JSON.stringify(allowedLocations)); try { const res = await fetch(API + '/stego/encode', { method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: formData }); if (res.ok) { alert('✅ Encoded and sent!'); document.getElementById('stegoMessage').value = ''; document.getElementById('stegoPassword').value = ''; document.getElementById('fakeMessage').value = ''; document.getElementById('stegoImage').value = ''; document.getElementById('aiPrompt').value = ''; document.getElementById('useAI').checked = false; document.getElementById('expiresIn').value = ''; document.getElementById('maxViews').value = ''; allowedLocations = []; updateAllowedLocationsList(); toggleAIOptions(); loadStegos(); } else { const err = await res.json(); alert('Encoding failed: ' + err.message); } } catch(err) { alert('Error: ' + err.message); } }
+        async function decodeStegoWithLocation() { const stegoId = document.getElementById('stegoList').value, password = document.getElementById('decodePassword').value; if (!stegoId || !password) { alert('Select stego image and enter password'); return; } if (!navigator.geolocation) { alert('Geolocation not supported'); return; } navigator.geolocation.getCurrentPosition(async (pos) => { const userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude }; try { const res = await fetch(API + '/stego/decode/' + stegoId, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ password, userLocation: JSON.stringify(userLocation) }) }); const data = await res.json(); const resultDiv = document.getElementById('decodeResult'); if (res.ok) { resultDiv.style.display = 'block'; resultDiv.innerHTML = `<strong>${data.isReal ? '🔓 Real:' : '⚠️ Fake:'}</strong><br>${data.decodedMessage}<br>${data.isAIGenerated ? '<em>🤖 AI Generated</em><br>' : ''}${data.remainingViews ? `<small>Views left: ${data.remainingViews}</small>` : ''}`; } else { resultDiv.style.display = 'block'; resultDiv.innerHTML = `<strong>❌ Error:</strong><br>${data.message}`; } } catch(err) { alert('Error: ' + err.message); } }, () => { alert('Unable to get location'); }); }
+        async function decodeStego() { const stegoId = document.getElementById('stegoList').value, password = document.getElementById('decodePassword').value; if (!stegoId || !password) { alert('Select stego image and enter password'); return; } try { const res = await fetch(API + '/stego/decode/' + stegoId, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ password }) }); const data = await res.json(); const resultDiv = document.getElementById('decodeResult'); if (res.ok) { resultDiv.style.display = 'block'; resultDiv.innerHTML = `<strong>${data.isReal ? '🔓 Real:' : '⚠️ Fake:'}</strong><br>${data.decodedMessage}<br>${data.isAIGenerated ? '<em>🤖 AI Generated</em><br>' : ''}${data.remainingViews ? `<small>Views left: ${data.remainingViews}</small>` : ''}`; } else { resultDiv.style.display = 'block'; resultDiv.innerHTML = `<strong>❌ Error:</strong><br>${data.message}`; } } catch(err) { alert('Error: ' + err.message); } }
+        
+        function switchTab(tab) { document.getElementById('chatsTab').style.display = tab === 'chats' ? 'block' : 'none'; document.getElementById('groupsTab').style.display = tab === 'groups' ? 'block' : 'none'; document.getElementById('stegoTab').style.display = tab === 'stego' ? 'block' : 'none'; document.querySelectorAll('.tab').forEach((btn, i) => btn.classList.toggle('active', (tab === 'chats' && i === 0) || (tab === 'groups' && i === 1) || (tab === 'stego' && i === 2))); }
+        function showRegister() { document.getElementById('loginPage').style.display = 'none'; document.getElementById('registerPage').style.display = 'flex'; }
+        function showLogin() { document.getElementById('registerPage').style.display = 'none'; document.getElementById('loginPage').style.display = 'flex'; }
+        function logout() { localStorage.clear(); if (socket) socket.disconnect(); location.reload(); }
+        
+        if (localStorage.getItem('token') && localStorage.getItem('user')) { currentUser = JSON.parse(localStorage.getItem('user')); startChat(); }
+    </script>
+</body>
+</html>
