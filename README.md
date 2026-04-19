@@ -10,15 +10,15 @@
 
 ---
 
-## 🚀 Live Demo
+##  Live Demo
 
 [Deploy your own instance on Railway](https://railway.app/)
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
-### 💬 Chat Features
+###  Chat Features
 | Feature | Description |
 |---------|-------------|
 | **Real-time Messaging** | Instant message delivery with Socket.io |
@@ -28,14 +28,14 @@
 | **Online/Offline Status** | Real-time user presence |
 | **Last Seen** | Track user's last activity |
 
-### 📎 Media & File Sharing
+###  Media & File Sharing
 | Feature | Description |
 |---------|-------------|
 | **File Sharing** | Send images, PDFs, documents, and more |
 | **Voice Messages** | Record and send voice notes |
 | **Location Sharing** | Share live location with Google Maps |
 
-### 🔐 Steganography (Advanced)
+### Steganography (Advanced)
 | Feature | Description |
 |---------|-------------|
 | **Image Steganography** | Hide secret messages inside images using LSB technique |
@@ -44,7 +44,7 @@
 | **GPS Location Lock** | Decode only from authorized locations |
 | **Self-Destruct** | Messages expire after set time or number of views |
 
-### 📞 Audio/Video Calling
+###  Audio/Video Calling
 | Feature | Description |
 |---------|-------------|
 | **Video Calling** | Face-to-face video calls with WebRTC |
@@ -53,14 +53,14 @@
 | **Call Status** | Ringing, Accepted, Rejected, Missed Call |
 | **Offline Detection** | Cannot call offline users |
 
-### 👥 Group Chat
+###  Group Chat
 | Feature | Description |
 |---------|-------------|
 | **Create Groups** | Form groups with multiple members |
 | **Admin Controls** | Add/remove members, make admins |
 | **Group Messages** | Real-time group conversations |
 
-### ✏️ Message Management
+###  Message Management
 | Feature | Description |
 |---------|-------------|
 | **Reply to Messages** | Threaded conversations |
@@ -69,7 +69,7 @@
 | **Pin Messages** | Save important messages |
 | **Message Reactions** | React with emojis (❤️👍😂😮😢😡) |
 
-### 🔍 Search & Navigation
+### Search & Navigation
 | Feature | Description |
 |---------|-------------|
 | **Search Messages** | Find messages by text |
@@ -78,7 +78,7 @@
 
 ---
 
-## 🏗️ Tech Stack
+##  Tech Stack
 
 | Layer | Technology |
 |-------|------------|
