@@ -8,31 +8,26 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// मिडलवेयर
+// ✅ मिडलवेयर (सबसे ज़रूरी)
 app.use(cors());
 app.use(express.json());
 
-// डेटाबेस कनेक्शन
+// ✅ डेटाबेस कनेक्शन
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('✅ MongoDB Connected'))
     .catch(err => console.log('❌ MongoDB Error:', err));
 
-// ✅ टेस्ट रूट (सबसे ज़रूरी)
+// ✅ टेस्ट रूट (बस यही एक रूट काफी है)
 app.get('/api/hello', (req, res) => {
-    res.json({ message: 'Hello from backend!' });
+    res.json({ message: 'Hello from backend! API is working.' });
 });
 
-// ✅ रजिस्टर रूट (टेस्ट के लिए)
+// ✅ रजिस्टर रूट (सिर्फ टेस्ट के लिए)
 app.post('/api/auth/register', (req, res) => {
-    res.json({ message: 'Register endpoint working!' });
+    res.json({ message: 'Register endpoint working! You can now register.' });
 });
 
-// ✅ लॉगिन रूट (टेस्ट के लिए)
-app.post('/api/auth/login', (req, res) => {
-    res.json({ message: 'Login endpoint working!' });
-});
-
-// सर्वर स्टार्ट करें
+// ✅ सर्वर स्टार्ट करें
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });
