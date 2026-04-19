@@ -11,8 +11,6 @@ const UserSchema = new mongoose.Schema({
   lastActive: { type: Date, default: Date.now },
   blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   favoriteContacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  twoFactorEnabled: { type: Boolean, default: false },
-  twoFactorSecret: { type: String, default: '' },
   currentLocation: { lat: Number, lng: Number, address: String }
 }, { timestamps: true });
 

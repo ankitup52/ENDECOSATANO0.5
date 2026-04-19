@@ -1,14 +1,9 @@
 const User = require('../models/User.model');
 const Message = require('../models/Message.model');
-const Voice = require('../models/Voice.model');
-const Group = require('../models/Group.model');
 
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find({ 
-      _id: { $ne: req.user._id },
-      blockedUsers: { $ne: req.user._id }
-    }).select('-password');
+    const users = await User.find({ _id: { $ne: req.user._id } }).select('-password');
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -58,7 +53,7 @@ const markAsRead = async (req, res) => {
   try {
     const { senderId } = req.body;
     await Message.updateMany(
-      { senderId: senderId, receiverId: req.user._id, isRead: false },
+      { senderId, receiverId: req.user._id, isRead: false },
       { isRead: true, readAt: new Date() }
     );
     res.json({ success: true });
@@ -70,8 +65,7 @@ const markAsRead = async (req, res) => {
 const uploadFile = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
-    const fileUrl = `/uploads/${req.file.filename}`;
-    res.json({ success: true, fileUrl, fileName: req.file.originalname });
+    res.json({ success: true, fileUrl: `/uploads/${req.file.filename}`, fileName: req.file.originalname });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -91,7 +85,6 @@ const uploadProfile = async (req, res) => {
   }
 };
 
-// Delete message
 const deleteMessage = async (req, res) => {
   try {
     const message = await Message.findById(req.params.messageId);
@@ -106,33 +99,29 @@ const deleteMessage = async (req, res) => {
   }
 };
 
-// Edit message
 const editMessage = async (req, res) => {
   try {
-    const { message } = req.body;
-    const msg = await Message.findById(req.params.messageId);
-    if (msg.senderId.toString() !== req.user._id.toString()) {
+    const message = await Message.findById(req.params.messageId);
+    if (message.senderId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized' });
     }
-    msg.message = message;
-    msg.isEdited = true;
-    msg.editedAt = new Date();
-    await msg.save();
-    res.json({ success: true, message: msg });
+    message.message = req.body.message;
+    message.isEdited = true;
+    message.editedAt = new Date();
+    await message.save();
+    res.json({ success: true, message });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Add reaction
 const addReaction = async (req, res) => {
   try {
     const { reaction } = req.body;
     const message = await Message.findById(req.params.messageId);
-    
-    const existingReaction = message.reactions.find(r => r.userId.toString() === req.user._id.toString());
-    if (existingReaction) {
-      existingReaction.reaction = reaction;
+    const existing = message.reactions.find(r => r.userId.toString() === req.user._id.toString());
+    if (existing) {
+      existing.reaction = reaction;
     } else {
       message.reactions.push({ userId: req.user._id, reaction });
     }
@@ -143,7 +132,6 @@ const addReaction = async (req, res) => {
   }
 };
 
-// Pin message
 const pinMessage = async (req, res) => {
   try {
     const message = await Message.findById(req.params.messageId);
@@ -159,43 +147,6 @@ const pinMessage = async (req, res) => {
   }
 };
 
-// Block user
-const blockUser = async (req, res) => {
-  try {
-    await User.findByIdAndUpdate(req.user._id, {
-      $addToSet: { blockedUsers: req.params.userId }
-    });
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Unblock user
-const unblockUser = async (req, res) => {
-  try {
-    await User.findByIdAndUpdate(req.user._id, {
-      $pull: { blockedUsers: req.params.userId }
-    });
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Add favorite contact
-const addFavorite = async (req, res) => {
-  try {
-    await User.findByIdAndUpdate(req.user._id, {
-      $addToSet: { favoriteContacts: req.params.userId }
-    });
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Share location
 const shareLocation = async (req, res) => {
   try {
     const { lat, lng, address } = req.body;
@@ -212,7 +163,6 @@ const shareLocation = async (req, res) => {
   }
 };
 
-// Search messages
 const searchMessages = async (req, res) => {
   try {
     const { query } = req.query;
@@ -221,18 +171,8 @@ const searchMessages = async (req, res) => {
         { senderId: req.user._id, message: { $regex: query, $options: 'i' } },
         { receiverId: req.user._id, message: { $regex: query, $options: 'i' } }
       ]
-    }).limit(50);
+    }).limit(50).populate('senderId', 'username');
     res.json(messages);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Update last seen
-const updateLastSeen = async (req, res) => {
-  try {
-    await User.findByIdAndUpdate(req.user._id, { lastActive: new Date() });
-    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -240,6 +180,5 @@ const updateLastSeen = async (req, res) => {
 
 module.exports = { 
   getUsers, sendMessage, getMessages, markAsRead, uploadFile, uploadProfile,
-  deleteMessage, editMessage, addReaction, pinMessage, blockUser, unblockUser,
-  addFavorite, shareLocation, searchMessages, updateLastSeen
+  deleteMessage, editMessage, addReaction, pinMessage, shareLocation, searchMessages
 };

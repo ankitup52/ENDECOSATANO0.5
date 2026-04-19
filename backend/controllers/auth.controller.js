@@ -27,6 +27,7 @@ const login = async (req, res) => {
     }
     
     user.status = 'online';
+    user.lastActive = new Date();
     await user.save();
     
     const token = generateToken(user._id);
@@ -36,4 +37,22 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { register, login };
+const getMe = async (req, res) => {
+  res.json(req.user);
+};
+
+const updateLocation = async (req, res) => {
+  try {
+    const { lat, lng, address } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { currentLocation: { lat, lng, address, updatedAt: Date.now() } },
+      { new: true }
+    );
+    res.json({ success: true, location: user.currentLocation });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { register, login, getMe, updateLocation };

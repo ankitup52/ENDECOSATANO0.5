@@ -1,8 +1,7 @@
 const express = require('express');
 const { 
   getUsers, sendMessage, getMessages, markAsRead, uploadFile, uploadProfile,
-  deleteMessage, editMessage, addReaction, pinMessage, blockUser, unblockUser,
-  addFavorite, shareLocation, searchMessages, updateLastSeen
+  deleteMessage, editMessage, addReaction, pinMessage, shareLocation, searchMessages
 } = require('../controllers/chat.controller');
 const { protect } = require('../middleware/auth.middleware');
 const { upload } = require('../middleware/upload.middleware');
@@ -19,11 +18,7 @@ router.delete('/message/:messageId', deleteMessage);
 router.put('/message/:messageId', editMessage);
 router.post('/message/:messageId/reaction', addReaction);
 router.post('/message/:messageId/pin', pinMessage);
-router.post('/block/:userId', blockUser);
-router.delete('/block/:userId', unblockUser);
-router.post('/favorite/:userId', addFavorite);
 router.post('/share-location', shareLocation);
 router.get('/search', searchMessages);
-router.post('/last-seen', updateLastSeen);
 
 module.exports = router;

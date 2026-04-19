@@ -2,16 +2,12 @@ const CryptoJS = require('crypto-js');
 const Jimp = require('jimp');
 
 class Steganography {
-  // Encode with fake message support
   static async encodeImage(imagePath, secretMessage, fakeMessage, password) {
     const image = await Jimp.read(imagePath);
-    
-    // Combine real and fake message
     const combinedData = JSON.stringify({
       real: secretMessage,
       fake: fakeMessage || 'No secret message here'
     });
-    
     const encrypted = CryptoJS.AES.encrypt(combinedData, password).toString();
     
     let binary = '';
@@ -34,7 +30,6 @@ class Steganography {
     return outputPath;
   }
   
-  // Decode with GPS and fake message support
   static async decodeImage(imagePath, password, userLocation = null, allowedLocations = []) {
     const image = await Jimp.read(imagePath);
     let binary = '';
@@ -63,13 +58,11 @@ class Steganography {
       data = { real: decrypted, fake: 'No secret message here' };
     }
     
-    // Check location if required
     if (allowedLocations && allowedLocations.length > 0 && userLocation) {
       let isInAllowedLocation = false;
       for (const loc of allowedLocations) {
         const distance = this.calculateDistance(
-          userLocation.lat, userLocation.lng,
-          loc.lat, loc.lng
+          userLocation.lat, userLocation.lng, loc.lat, loc.lng
         );
         if (distance <= (loc.radius || 100)) {
           isInAllowedLocation = true;
@@ -77,7 +70,7 @@ class Steganography {
         }
       }
       if (!isInAllowedLocation) {
-        throw new Error('Location not authorized to decode this message');
+        throw new Error('Location not authorized');
       }
     }
     
@@ -85,7 +78,7 @@ class Steganography {
   }
   
   static calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371e3; // meters
+    const R = 6371e3;
     const φ1 = lat1 * Math.PI / 180;
     const φ2 = lat2 * Math.PI / 180;
     const Δφ = (lat2 - lat1) * Math.PI / 180;

@@ -5,7 +5,7 @@ const MessageSchema = new mongoose.Schema({
   receiverId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   groupId: { type: mongoose.Schema.Types.ObjectId, ref: 'Group' },
   message: { type: String, required: true },
-  type: { type: String, enum: ['text', 'image', 'stego', 'file', 'voice', 'location'], default: 'text' },
+  type: { type: String, enum: ['text', 'image', 'stego', 'file', 'voice', 'location', 'encrypted'], default: 'text' },
   fileUrl: { type: String, default: '' },
   stegoId: { type: mongoose.Schema.Types.ObjectId, ref: 'StegoImage' },
   replyTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Message', default: null },
@@ -19,7 +19,6 @@ const MessageSchema = new mongoose.Schema({
   isEdited: { type: Boolean, default: false },
   editedAt: { type: Date },
   readAt: { type: Date },
-  deliveredAt: { type: Date },
   pinnedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   location: { lat: Number, lng: Number, address: String }
 }, { timestamps: true });

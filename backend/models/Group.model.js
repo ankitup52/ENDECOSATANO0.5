@@ -11,8 +11,7 @@ const GroupSchema = new mongoose.Schema({
     joinedAt: { type: Date, default: Date.now }
   }],
   bannedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  pinnedMessages: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Message' }],
-  typingUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+  pinnedMessages: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Message' }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Group', GroupSchema);

@@ -1,7 +1,6 @@
 const express = require('express');
 const { 
-  createGroup, getMyGroups, getGroupMessages, addMember, removeMember,
-  makeAdmin, exitGroup, banUser
+  createGroup, getMyGroups, getGroupMessages, addMember, removeMember, makeAdmin, exitGroup
 } = require('../controllers/group.controller');
 const { protect } = require('../middleware/auth.middleware');
 const router = express.Router();
@@ -14,6 +13,5 @@ router.post('/:groupId/add-member', addMember);
 router.delete('/:groupId/remove-member/:userId', removeMember);
 router.post('/:groupId/make-admin/:userId', makeAdmin);
 router.post('/:groupId/exit', exitGroup);
-router.post('/:groupId/ban/:userId', banUser);
 
 module.exports = router;

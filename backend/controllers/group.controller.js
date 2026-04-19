@@ -18,10 +18,9 @@ const createGroup = async (req, res) => {
 
 const getMyGroups = async (req, res) => {
   try {
-    const groups = await Group.find({ 
-      'members.user': req.user._id,
-      bannedUsers: { $ne: req.user._id }
-    }).populate('members.user', 'username profilePicture').populate('admin', 'username');
+    const groups = await Group.find({ 'members.user': req.user._id })
+      .populate('members.user', 'username profilePicture')
+      .populate('admin', 'username');
     res.json(groups);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -97,19 +96,4 @@ const exitGroup = async (req, res) => {
   }
 };
 
-const banUser = async (req, res) => {
-  try {
-    const group = await Group.findById(req.params.groupId);
-    if (group.admin.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Only admin can ban users' });
-    }
-    group.bannedUsers.push(req.params.userId);
-    group.members = group.members.filter(m => m.user.toString() !== req.params.userId);
-    await group.save();
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-module.exports = { createGroup, getMyGroups, getGroupMessages, addMember, removeMember, makeAdmin, exitGroup, banUser };
+module.exports = { createGroup, getMyGroups, getGroupMessages, addMember, removeMember, makeAdmin, exitGroup };

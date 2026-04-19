@@ -7,28 +7,18 @@ const StegoImageSchema = new mongoose.Schema({
   originalImage: String,
   encodedImage: String,
   secretData: String,
-  fakeData: { type: String, default: '' },  // Fake message for wrong password
+  fakeData: { type: String, default: '' },
   password: String,
   fileType: { type: String, enum: ['text', 'pdf', 'image', 'file'], default: 'text' },
   isDecoded: { type: Boolean, default: false },
   viewCount: { type: Number, default: 0 },
-  
-  // GPS Location Lock
   allowedLocations: [{
-    lat: Number,
-    lng: Number,
-    radius: Number,  // Radius in meters
-    name: String
+    lat: Number, lng: Number, radius: Number, name: String
   }],
-  
-  // AI Generated
   isAIGenerated: { type: Boolean, default: false },
   aiPrompt: { type: String, default: '' },
-  
-  // Self Destruct
   expiresAt: { type: Date, default: null },
   maxViews: { type: Number, default: 0 },
-  
   senderLocation: { lat: Number, lng: Number },
   receiverLocation: { lat: Number, lng: Number }
 }, { timestamps: true });
