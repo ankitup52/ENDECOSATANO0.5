@@ -38,7 +38,7 @@ app.use('/api/group', require('./routes/group.routes'));
 app.use('/api/stego', require('./routes/stego.routes'));
 
 // Serve static frontend
-app.use(express.static(path.join(__dirname, 'public')));
+//app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
